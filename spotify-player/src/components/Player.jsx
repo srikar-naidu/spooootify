@@ -10,11 +10,10 @@ export default function Player({
   volume, onToggle, onSeek, onVolumeChange, loading
 }) {
   if (!song) return (
-    // Placeholder when nothing is playing yet
     <div className="w-full rounded-3xl bg-white/10 backdrop-blur-md
                     border border-white/20 p-8 text-center">
       <div className="text-5xl mb-3">🎵</div>
-      <p className="text-white/60 text-sm font-semibold">
+      <p className="text-white/60 text-xs tracking-widest uppercase">
         search a song to start playing
       </p>
     </div>
@@ -26,7 +25,7 @@ export default function Player({
     <div className="w-full rounded-3xl bg-white/10 backdrop-blur-xl
                     border border-white/20 shadow-2xl p-5">
 
-      {/* Album art — takes up most of the card */}
+      {/* Album art */}
       <div className="relative mb-4">
         <img
           src={song.thumbnail}
@@ -36,23 +35,28 @@ export default function Player({
                       ${isPlaying ? 'scale-[1.02] shadow-blue-500/30' : 'scale-100'}`}
           style={{ height: '200px' }}
         />
-        {/* Glowing ring when playing */}
         {isPlaying && (
           <div className="absolute inset-0 rounded-2xl ring-2 ring-blue-400/50 animate-pulse" />
         )}
+
+        {/* Loop indicator badge */}
+        <div className="absolute bottom-2 right-2 bg-blue-500/80 backdrop-blur-sm
+                        text-white text-xs px-2 py-1 rounded-lg font-bold tracking-wider">
+          🔁 LOOP
+        </div>
       </div>
 
       {/* Song info */}
       <div className="text-center mb-4">
-        <p className="text-white font-bold text-sm leading-tight line-clamp-1">
+        <p className="text-white font-bold text-xs leading-tight line-clamp-1 tracking-wide">
           {song.title}
         </p>
-        <p className="text-blue-300 text-xs mt-1 font-medium">
+        <p className="text-blue-300 text-xs mt-1 tracking-widest">
           {song.artist}
         </p>
       </div>
 
-      {/* Progress bar */}
+      {/* Progress */}
       <div className="mb-4">
         <input
           type="range"
@@ -66,7 +70,7 @@ export default function Player({
             background: `linear-gradient(to right, #3b82f6 ${progress}%, rgba(255,255,255,0.2) ${progress}%)`
           }}
         />
-        <div className="flex justify-between text-xs text-blue-300 font-semibold mt-1">
+        <div className="flex justify-between text-xs text-blue-300 font-bold mt-1 tracking-wider">
           <span>{formatTime(currentTime)}</span>
           <span>{formatTime(duration)}</span>
         </div>

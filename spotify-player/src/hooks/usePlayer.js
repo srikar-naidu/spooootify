@@ -1,44 +1,36 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 
 export function usePlayer() {
-  // The currently selected song object { id, title, artist, thumbnail }
   const [currentSong, setCurrentSong] = useState(null)
-  // True when audio is actively playing
   const [isPlaying, setIsPlaying] = useState(false)
-  // Current playback position in seconds
   const [currentTime, setCurrentTime] = useState(0)
-  // Total song duration in seconds
   const [duration, setDuration] = useState(0)
-  // Volume 0-1
   const [volume, setVolume] = useState(0.8)
-  // True while fetching audio URL from backend
   const [loadingAudio, setLoadingAudio] = useState(false)
 
-  // useRef holds the actual <audio> DOM element across renders
-  // Changes to ref don't trigger re-renders (unlike useState)
   const audioRef = useRef(new Audio())
 
-  // When volume state changes, update the actual audio element
   useEffect(() => {
     audioRef.current.volume = volume
   }, [volume])
 
-  // Set up audio event listeners once on mount
   useEffect(() => {
     const audio = audioRef.current
 
-    // timeupdate fires ~4x per second while playing — update progress bar
     const onTimeUpdate = () => setCurrentTime(audio.currentTime)
-    // loadedmetadata fires when audio info (duration) is available
     const onLoadedMetadata = () => setDuration(audio.duration)
-    // ended fires when song finishes
-    const onEnded = () => setIsPlaying(false)
+
+    // Loop: when song ends, restart from beginning automatically
+    const onEnded = () => {
+      audio.currentTime = 0
+      audio.play()
+      setIsPlaying(true)
+    }
 
     audio.addEventListener('timeupdate', onTimeUpdate)
     audio.addEventListener('loadedmetadata', onLoadedMetadata)
     audio.addEventListener('ended', onEnded)
 
-    // Cleanup: remove listeners when component unmounts
     return () => {
       audio.removeEventListener('timeupdate', onTimeUpdate)
       audio.removeEventListener('loadedmetadata', onLoadedMetadata)
@@ -47,7 +39,6 @@ export function usePlayer() {
     }
   }, [])
 
-  // Called when user clicks a song in the list
   const playSong = useCallback(async (song) => {
     const audio = audioRef.current
     audio.pause()
@@ -58,12 +49,12 @@ export function usePlayer() {
     setLoadingAudio(true)
 
     try {
-      // Ask our backend: "give me the audio URL for this YouTube video ID"
-      const res = await fetch(`/api/audio?id=${song.id}`)
+      // Uses VITE_BACKEND_URL in production, empty string (proxy) in dev
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || ''
+      const res = await fetch(`${backendUrl}/api/audio?id=${song.id}`)
       if (!res.ok) throw new Error('Backend error')
       const data = await res.json()
 
-      // Point the audio element at the direct stream URL
       audio.src = data.url
       audio.load()
       await audio.play()
@@ -75,7 +66,6 @@ export function usePlayer() {
     }
   }, [])
 
-  // Toggle play/pause for current song
   const togglePlay = useCallback(() => {
     const audio = audioRef.current
     if (!currentSong) return
@@ -89,22 +79,13 @@ export function usePlayer() {
     }
   }, [isPlaying, currentSong])
 
-  // Called when user drags the progress bar
   const seek = useCallback((time) => {
     audioRef.current.currentTime = time
     setCurrentTime(time)
   }, [])
 
   return {
-    currentSong,
-    isPlaying,
-    currentTime,
-    duration,
-    volume,
-    setVolume,
-    loadingAudio,
-    playSong,
-    togglePlay,
-    seek
+    currentSong, isPlaying, currentTime, duration,
+    volume, setVolume, loadingAudio, playSong, togglePlay, seek
   }
 }
